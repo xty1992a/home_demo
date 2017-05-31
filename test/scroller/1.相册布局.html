@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+  <title></title>
+  <style type="text/css">
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #head, #big_head {
+      height: 2rem;
+      background: black;
+      text-align: center;
+      line-height: 2rem;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    #wrap {
+      position: absolute;
+      top: 2rem;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    #content {
+      position: relative;
+    }
+
+    #list {
+      list-style: none;
+      overflow: hidden;
+    }
+
+    #list li {
+      float: left;
+      width: 7rem;
+      height: 7rem;
+      margin: 0.5rem;
+      background: url(img/loadingImg.gif) no-repeat center #eee;
+    }
+
+    #list li img {
+      width: 100%;
+      border-radius: 20px;
+      opacity: 0;
+      transition: opacity 1s;
+    }
+
+    #footer {
+      position: absolute;
+      bottom: -4rem;
+      height: 4rem;
+      line-height: 4rem;
+      width: 100%;
+      text-align: center;
+    }
+
+    #bigImg {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: #eee;
+      transition: 1s transform;
+      transform: scale(0);
+    }
+
+    #big_head a {
+      text-decoration: none;
+      color: #FFF;
+      float: right;
+      margin-right: 10px;
+    }
+
+    #bigImg img {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 12rem;
+      height: 12rem;
+      margin: -6rem 0 0 -6rem;
+    }
+  </style>
+
+</head>
+<body>
+<header id="head">三国女将</header>
+
+<div id="wrap">
+  <div id="content">
+    <ul id="list">
+      <!--<li>
+          <img src="img/1.jpg"/>
+      </li>
+      -->
+    </ul>
+    <footer id="footer">
+      上滑可以加载更多
+    </footer>
+
+  </div>
+
+</div>
+
+<!--大图-->
+<div id="bigImg">
+  <header id="big_head">
+    大图预览
+    <a href="###">x</a>
+  </header>
+  <img/>
+</div>
+</body>
+<script type="text/javascript" src="js/gesture.js"></script>
+<script type="text/javascript" src="js/transform.js"></script>
+<script type="text/javascript">
+  document.addEventListener('touchstart', function (ev) {
+    ev.preventDefault();
+  });
+
+  //rem适配
+  (function () {
+    var width = document.documentElement.clientWidth;
+    var styleN = document.createElement('style');
+    styleN.innerHTML = 'html{font-size: ' + width / 16 + 'px !important;}';
+    document.head.appendChild(styleN);
+  })();
+
+  window.onload = function () {
+    var wrap = document.getElementById('wrap');
+    var content = document.getElementById('content');
+    var list = document.getElementById('list');
+
+    var head = document.getElementById('head');
+    var footer = document.getElementById('footer');
+
+    var bigImg = document.getElementById('bigImg');
+    var close = document.querySelector('#big_head a');
+    var img = document.querySelector('#bigImg img');
+
+    close.addEventListener('touchend', function () {
+      transformCss(bigImg, 'scale', 0);
+    })
+
+    //transformCss(bigImg,'scale',0);
+
+    //footer隐藏
+    transformCss(footer, 'scale', 0);
+
+    //判断是不是底部
+    var isBottom = false;
+
+    var minT = head.offsetHeight;
+    var maxT = document.documentElement.clientHeight;
+
+    //img的url
+    var urlArr = [];
+    for (var i = 0; i < 20; i++) {
+      urlArr.push('img/' + (i % 18 + 1) + '.jpg');
+    }
+    ;
+
+    //用来判断底部只执行一次
+    var onlyOne = true;
+
+    var liLength = 12;
+    var start = 0;
+
+    createLi();
+
+    //正常情况下，没有超出的最大距离
+    //content.offsetHeight随li增加而增加
+    var maxSroll = content.offsetHeight - wrap.clientHeight;
+
+    function createLi() {
+
+      if (onlyOne && start >= urlArr.length) {
+        onlyOne = false;
+        footer.innerHTML = '赵伟,马超，加载完了';
+
+        setTimeout(function () {
+
+          footer.innerHTML = '';
+          content.style.transition = '0.5s';
+          transformCss(content, 'translateY', -maxSroll);
+          transformCss(footer, 'scale', 0);
+        }, 1000);
+
+        return;
+      }
+
+      var end = start + liLength;
+      end = end > urlArr.length ? urlArr.length : end;
+
+      //创建li
+      for (var i = start; i < end; i++) {
+        var li = document.createElement('li');
+        li.src = urlArr[i];
+        //误触
+        li.addEventListener('touchmove', function () {
+          if (!this.isMove) {
+            this.isMove = true;
+          }
+        });
+
+        li.addEventListener('touchend', function () {
+          var left = this.getBoundingClientRect().left;
+          var top = this.getBoundingClientRect().top;
+
+          bigImg.style.transformOrigin = left + 'px ' + top + 'px';
+
+          img.src = this.src;
+          if (!this.isMove) {
+            transformCss(bigImg, 'scale', 1);
+          }
+          this.isMove = false;
+        })
+
+
+        //li创建时候，没有图片
+        li.islaod = false;
+        list.appendChild(li);
+      }
+      start = end;
+
+
+      lazyLoad();
+    };
+
+    //懒加载
+    function lazyLoad() {
+      var lis = document.getElementsByTagName('li');
+      //拿到每一个li
+      for (var i = 0; i < lis.length; i++) {
+        var top = lis[i].getBoundingClientRect().top;
+
+        if (!lis[i].islaod && (minT < top) && (top < maxT)) {
+          createImg(lis[i]);
+          lis[i].islaod = true;
+        }
+      }
+    }
+
+    //创建img
+    function createImg(li) {
+
+      var img = new Image();
+      img.src = li.src;
+//					setTimeout(function(){
+//						img.style.opacity = '1';
+//					},20);
+      img.onload = function () {
+        img.style.opacity = '1';
+      };
+      li.appendChild(img);
+
+    };
+
+
+    var footerH = footer.offsetHeight;
+    //滑屏
+    var callback = {
+      start: function () {
+        if (!onlyOne) {
+          return
+        }
+        ;
+        maxSroll = content.offsetHeight - wrap.clientHeight;
+        var conY = Math.floor(transformCss(content, 'translateY'));
+
+        if (Math.abs(conY) >= maxSroll) {
+          isBottom = true;
+        }
+        ;
+
+      },
+      move: function () {
+        if (!onlyOne) {
+          return
+        }
+        ;
+        if (isBottom) {
+          //让footer出来
+          maxSroll = content.offsetHeight - wrap.clientHeight;
+          var scale = (Math.abs(transformCss(content, 'translateY')) - maxSroll) / footerH
+          scale = Math.abs(scale) > 1 ? 1 : Math.abs(scale);
+
+          transformCss(footer, 'scale', scale);
+
+        }
+        ;
+        lazyLoad();
+      },
+      //touchend
+      over: function () {
+        if (!onlyOne) {
+          return
+        }
+        ;
+        maxSroll = content.offsetHeight - wrap.clientHeight;
+        if (isBottom && ((Math.abs(transformCss(content, 'translateY')) - maxSroll) > footerH)) {
+
+          //之前定义变量，绑定到元素的属性上
+          clearInterval(wrap.timer);
+          createLi();
+          isBottom = false;
+        }
+
+
+      }
+    };
+    Drag(wrap, callback);
+
+    gesTrueImg();
+
+    function gesTrueImg() {
+      //旋转缩放
+      var start = {
+        scaleC: 0,
+        rotateD: 0
+      };
+      var callBack = {
+
+        start: function () {
+
+          start.scaleC = transformCss(img, 'scale');
+          start.rotateD = transformCss(img, 'rotate');
+        },
+        change: function (ev) {
+          //bigImg.innerHTML = 123;
+
+          transformCss(img, 'scale', ev.scale * start.scaleC);
+          transformCss(img, 'rotate', ev.rotation + start.rotateD);
+        }
+
+      };
+
+      gesTure(img, callBack);
+    }
+
+
+  };
+
+</script>
+</html>

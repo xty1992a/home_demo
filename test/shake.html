@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>shake</title>
+  <style>
+    #box{
+      height: 30px;
+      width: 30px;
+      border-radius: 50%;
+      box-sizing: border-box;
+      border: 7px solid #5152e6;
+    }
+    .shake{
+      animation: shake .6s infinite;
+    }
+    @keyframes shake {
+      20%{
+        transform: scale(.8);
+      }
+      40%{
+        transform: scale(1.5);
+      }
+      60%{
+        transform: scale(0.8);
+      }
+      80%{
+        transform: scale(1.2);
+      }
+      100%{
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="box"></div>
+
+<script type="text/javascript">
+  var box = document.getElementById('box')
+  box.addEventListener('click', function () {
+    console.log('click')
+    if (!this.shake) {
+      this.shake = true
+      this.classList.add('shake')
+    } else {
+      this.shake = false
+      this.classList.remove('shake')
+    }
+  })
+
+</script>
+</body>
+</html>

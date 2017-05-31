@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width initial-scale=1.0 user-scalable=no">
+  <title>ball</title>
+  <style>
+    #list{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .item{
+      height: 50px;
+      display: flex;
+      padding: 0 10px;
+      align-items: center;
+      justify-content:space-between;
+      border-bottom: 1px solid #5152e6;
+    }
+    .icon{
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-block;
+      background-color: yellowgreen;
+    }
+    .left{
+
+    }
+    #foot{
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 50px;
+      position: fixed;
+      background: orange;
+      transition: 1s linear;
+    }
+    .ball-wrap{
+      left: 20%;
+      width: 50px;
+      height: 50px;
+      position: absolute;
+    }
+    #fake{
+      left: 16%;
+      background: aqua;
+    }
+    .ball{
+      width: 20px;
+      z-index: 10;
+      height: 20px;
+      display: none;
+      position: absolute;
+    }
+    .inner{
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: orangered;
+    }
+
+    .drop{
+      animation: drop .5s linear;
+    }
+    @keyframes drop {
+      to {
+        transform: translate3d(0,0,0);
+      }
+    }
+    .inner-drop{
+      animation: drop .5s cubic-bezier(0.35,-0.56, 1, 1);
+    }
+    @keyframes inner-drop {
+      to {
+        transform: translate3d(0,0,0);
+      }
+    }
+    .shake{
+      animation: shake .8s;
+    }
+    @keyframes shake {
+      10% {transform: scale(0.7);}
+      30% {transform: scale(1.4);}
+      50% {transform: scale(0.8);}
+      70% {transform: scale(1.2);}
+      90% {transform: scale(0.9);}
+      100% {transform: scale(1);}
+    }
+  </style>
+</head>
+<body>
+
+
+<ul id="list"></ul>
+
+<div id="foot">
+  <div class="ball-wrap" id="real"></div>
+  <div class="ball-wrap" id="fake"></div>
+</div>
+
+<script type="text/javascript">
+  var list = document.getElementById('list')
+  var real = document.getElementById('real')
+  var fake = document.getElementById('fake')
+  initHtml()
+
+  var balls = document.querySelectorAll('.ball')
+  var ballRect = real.getBoundingClientRect()
+
+  var dropList = []
+  list.addEventListener('touchstart', function (ev) {
+    var icon = ev.target
+    for (var i = 0; i < balls.length; i++) {
+      let ball = balls[i]
+      if (!ball.show) {
+        ball.show = true
+        dropList.push(ball)
+        break
+      }
+    }
+    var ball = dropList.shift()
+    var inner = ball.children[0]
+    fake.classList.remove('shake')
+
+    inner.addEventListener('animationend', clear)
+    ball.addEventListener('animationend', clear)
+
+    if (icon.nodeName.toUpperCase() === 'SPAN') {
+      var iconRect = icon.getBoundingClientRect()
+      var top = iconRect.top - ballRect.top
+      var left = iconRect.left - ballRect.left
+
+      ball.style.display = 'block'
+      inner.style.display = 'block'
+      ball.style.transform = 'translate3d('+left+'px,0,0)'
+      inner.style.transform = 'translate3d(0,'+top+'px,0)'
+
+      setTimeout(function () {
+        ball.classList.add('drop')
+        inner.classList.add('inner-drop')
+      }, 0)
+    }
+  })
+
+  fake.addEventListener('animationend', function () {
+    this.classList.remove('shake')
+  })
+
+  function clear() {
+    this.removeEventListener('animationend', clear)
+    this.show = false
+    fake.style.transform = 'scale(1)'
+    setTimeout(function () {
+      fake.classList.add('shake')
+    }, 10)
+    this.style.display = 'none'
+    this.classList.remove('drop')
+    this.classList.remove('inner-drop')
+    this.style.transform = 'translate3d(0,0,0)'
+  }
+
+  function initHtml() {
+    var htmlStr = ''
+    for (var i = 0; i < 20; i++) {
+      htmlStr += '<li class="item"><span class="icon"></span><span class="icon left"></span></li>'
+    }
+    list.innerHTML = htmlStr
+    htmlStr = ''
+    for (var i = 0; i < 7; i++) {
+      htmlStr += '<div class="ball"><div class="inner"></div></div>'
+    }
+    real.innerHTML = htmlStr
+  }
+</script>
+</body>
+</html>
